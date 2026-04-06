@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>MasNoer - Puzzle Strategi Warna & Ledakan Nuklir</title>
+    <meta name="description" content="Mainkan MasNoer, game puzzle strategi warna seru dengan efek ledakan nuklir. Hancurkan blok, dapatkan skor tertinggi, dan nikmati grafis modern.">
+    <meta name="keywords" content="game online, puzzle, strategy game, masnoer, game gratis, game browser">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-bg: #0a0a12;
+            --accent-color: #00ffcc;
+            --danger-color: #ff5252;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #0a0a12, #1a1a2e, #16213e, #0f0f1a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            color: white;
+            touch-action: manipulation;
+        }
+
+        @keyframes gradientBG {
+            0% {background-position: 0% 50%}
+            50% {background-position: 100% 50%}
+            100% {background-position: 0% 50%}
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            width: 94vw;
+            max-width: 480px;
+            margin: 20px 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #ff4444, #ffeb3b, #44ff44, #00bcd4, #2979ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-box {
+            background: #000;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            background: #000;
+            padding: 15px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            position: relative;
+        }
+
+        .cell:active { transform: scale(0.9); }
+
+        .red { background: radial-gradient(circle, #ff5252, #b71c1c) }
+        .blue { background: radial-gradient(circle, #448aff, #0d47a1) }
+        .green { background: radial-gradient(circle, #69f0ae, #1b5e20) }
+        .yellow { background: radial-gradient(circle, #ffff8d, #f57f17) }
+        .purple { background: radial-gradient(circle, #e040fb, #4a148c) }
+        .orange { background: radial-gradient(circle, #ffab40, #e65100) }
+
+        .bomb {
+            background: radial-gradient(circle, #424242, #000) !important;
+            border: 2px solid gold !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .bomb:after {
+            content: "💣";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.4rem;
+            animation: bombPulse 0.5s infinite alternate;
+        }
+
+        @keyframes bombPulse {
+            from { transform: translate(-50%, -50%) scale(0.9); }
+            to { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .reset-btn {
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            background: linear-gradient(145deg, #ff5252, #d32f2f);
+            border: none;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 82, 82, 0.4);
+            transition: 0.3s;
+        }
+
+        .reset-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 82, 82, 0.6); }
+
+        /* SEO & Legal UI */
+        .game-info {
+            max-width: 480px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+            padding: 10px;
+            line-height: 1.6;
+        }
+
+        .footer-nav {
+            margin-top: 15px;
+            font-size: 0.8rem;
+        }
+
+        .footer-nav a {
+            color: #aaa;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer-nav a:hover { color: var(--accent-color); }
+
+        /* Modal Settings */
+        #modalOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            max-width: 650px;
+            margin: 40px auto;
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            color: #ddd;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--danger-color);
+        }
+
+        .combo-popup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 20px rgba(255,0,0,1), 0 0 10px gold;
+            animation: comboAnim 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes comboAnim {
+            0% { opacity: 0; transform: translate(-50%, -20%) scale(0.5); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
+        }
+
+        .particle { position: fixed; border-radius: 50%; pointer-events: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="header">
+            <h1>MasNoer</h1>
+            <div class="score-box"><span id="score">0</span></div>
+        </div>
+        <div class="board" id="board"></div>
+        <button class="reset-btn" onclick="resetGame()">ULANGI GAME</button>
+    </div>
+
+    <div class="game-info">
+        <strong>Tentang Game:</strong> MasNoer adalah permainan puzzle pencocokan warna yang seru. Klik kelompok warna yang sama untuk mencetak poin. Hancurkan <strong>Bomb 💣</strong> untuk memicu ledakan nuklir yang membersihkan seluruh warna target di layar!
+    </div>
+
+    <nav class="footer-nav">
+        <a href="javascript:void(0)" onclick="openModal('about')">Tentang</a>
+        <a href="javascript:void(0)" onclick="openModal('privacy')">Kebijakan Privasi</a>
+        <a href="javascript:void(0)" onclick="openModal('terms')">Syarat & Ketentuan</a>
+        <a href="javascript:void(0)" onclick="openModal('contact')">Kontak</a>
+    </nav>
+
+    <div id="modalOverlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        /* GAME CONFIG */
+        const config = {
+            size: 6,
+            colors: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
+            bombChance: 0.12,
+            bombScore: 250
+        };
+
+        let board = [];
+        let score = 0;
+        let isProcessing = false;
+        const boardEl = document.getElementById("board");
+        const scoreEl = document.getElementById("score");
+
+        /* AUTHENTIC NUCLEAR BOOM AUDIO (WEB AUDIO API) */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTung() {
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(now + 0.1);
+        }
+
+        function playNuclearBoom() {
+            const now = audioCtx.currentTime;
+            
+            // Layer 1: Sub Bass Impact
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(120, now);
+            osc.frequency.exponentialRampToValueAtTime(20, now + 1.5);
+            gain.gain.setValueAtTime(1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(now + 1.5);
+
+            // Layer 2: White Noise (The Explosion Sound)
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const noiseGain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(800, now);
+            filter.frequency.exponentialRampToValueAtTime(30, now + 2);
+
+            noiseGain.gain.setValueAtTime(0.7, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 2);
+
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(); noise.stop(now + 2);
+        }
+
+        /* CORE ENGINE */
+        function initBoard() {
+            board = [];
+            for (let r = 0; r < config.size; r++) {
+                let row = [];
+                for (let c = 0; c < config.size; c++) row.push(newCell());
+                board.push(row);
+            }
+        }
+
+        function newCell() {
+            return {
+                color: config.colors[Math.floor(Math.random() * config.colors.length)],
+                isBomb: Math.random() < config.bombChance
+            };
+        }
+
+        function renderBoard() {
+            boardEl.innerHTML = "";
+            for (let r = 0; r < config.size; r++) {
+                for (let c = 0; c < config.size; c++) {
+                    const cell = board[r][c];
+                    const div = document.createElement("div");
+                    div.className = `cell ${cell.color} ${cell.isBomb ? 'bomb' : ''}`;
+                    div.onclick = (e) => handleClick(r, c, e);
+                    boardEl.appendChild(div);
+                }
+            }
+        }
+
+        function handleClick(r, c, e) {
+            if (isProcessing) return;
+            if (audioCtx.state === "suspended") audioCtx.resume();
+
+            const clicked = board[r][c];
+            if (clicked.isBomb) {
+                triggerBomb(r, c, e);
+                return;
+            }
+
+            const matches = findMatches(r, c, clicked.color);
+            if (matches.length >= 2) {
+                playTung();
+                score += matches.length * 50;
+                scoreEl.textContent = score;
+                spawnParticles(e.clientX, e.clientY, clicked.color);
+                matches.forEach(m => board[m.r][m.c] = newCell());
+                renderBoard();
+                showCombo(matches.length + " COMBO!");
+            }
+        }
+
+        function triggerBomb(r, c, e) {
+            playNuclearBoom();
+            if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+            
+            let targetColor = board[r][c].color;
+            let killed = 0;
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    if (board[row][col].color === targetColor) {
+                        board[row][col] = newCell();
+                        killed++;
+                    }
+                }
+            }
+            score += killed * config.bombScore;
+            scoreEl.textContent = score;
+            spawnParticles(e.clientX, e.clientY, "#ffaa00");
+            renderBoard();
+        }
+
+        function findMatches(r, c, color, visited = new Set()) {
+            const key = `${r},${c}`;
+            if (r < 0 || c < 0 || r >= config.size || c >= config.size) return [];
+            if (visited.has(key) || board[r][c].color !== color || board[r][c].isBomb) return [];
+            visited.add(key);
+            return [{r, c}, 
+                ...findMatches(r-1, c, color, visited),
+                ...findMatches(r+1, c, color, visited),
+                ...findMatches(r, c-1, color, visited),
+                ...findMatches(r, c+1, color, visited)];
+        }
+
+        function spawnParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                const p = document.createElement("div");
+                p.className = "particle";
+                p.style.width = p.style.height = Math.random() * 8 + 4 + "px";
+                p.style.background = color;
+                p.style.left = x + "px"; p.style.top = y + "px";
+                document.body.appendChild(p);
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                let vx = Math.cos(angle) * speed;
+                let vy = Math.sin(angle) * speed;
+                let life = 25;
+                function move() {
+                    life--; x += vx; y += vy;
+                    p.style.left = x + "px"; p.style.top = y + "px"; p.style.opacity = life/25;
+                    if (life > 0) requestAnimationFrame(move); else p.remove();
+                }
+                move();
+            }
+        }
+
+        function showCombo(text) {
+            const div = document.createElement("div");
+            div.className = "combo-popup";
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 800);
+        }
+
+        function resetGame() {
+            score = 0; scoreEl.textContent = 0;
+            initBoard(); renderBoard();
+        }
+
+        /* ADSENSE COMPLIANCE MODALS */
+        const legalData = {
+            privacy: `<h2>Kebijakan Privasi</h2><p>Kami menggunakan layanan iklan pihak ketiga seperti Google AdSense. Google menggunakan cookie untuk menayangkan iklan berdasarkan kunjungan Anda ke situs ini. Anda dapat menonaktifkan cookie melalui pengaturan browser Anda.</p>`,
+            terms: `<h2>Syarat & Ketentuan</h2><p>Game MasNoer disediakan 'sebagaimana adanya'. Kami tidak bertanggung jawab atas data skor yang hilang karena pembersihan cache browser. Gunakan situs ini dengan bijak.</p>`,
+            about: `<h2>Tentang Kami</h2><p>MasNoer adalah situs mini-game yang dikembangkan untuk memberikan hiburan berkualitas tinggi dengan teknologi Web Audio dan HTML5 Canvas terbaru.</p>`,
+            contact: `<h2>Kontak</h2><p>Punya pertanyaan atau masukan? Hubungi kami di: <strong>admin@masnoer-game.com</strong></p>`
+        };
+
+        function openModal(type) {
+            document.getElementById('modalBody').innerHTML = legalData[type];
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+        // Start
+        initBoard();
+        renderBoard();
+    </script>
+</body>
+</html>
